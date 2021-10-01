@@ -1,5 +1,6 @@
 import java.io.File
 import java.lang.Integer.toBinaryString
+import kotlin.math.ceil
 
 const val HASHLEN = 31
 const val STARTDIR = "db"
@@ -16,8 +17,54 @@ fun processInput(args: Array<String>): InputData {
     TODO()
 }
 
-fun add(element: Element) {
-    TODO()
+/*
+ * Получает element.
+ * Если файла с таким ключом не существует, то добавляет его и возвращает true.
+ * Иначе возвращает false.
+ */
+fun add(element: Element): Boolean {
+
+    /*
+     * Создаёт для файла более глубокую директорию и перемещает его туда
+     */
+    fun push(parent: File, file: File, i: Int) {
+        val elem = getElementFromFile(file)
+        file.delete()
+
+        val newDir = File(parent, elem.keyHash[i].toString())
+        newDir.mkdir()
+        createFileForElement(newDir, elem)
+    }
+
+
+    if (getNode(element) != null) return false
+
+    // начинаем в корне структуры
+    var currDir = File(STARTDIR)
+
+    for (i in 0 until HASHLEN) {
+        when {
+            // пытаемся перейти по биту
+            File(currDir, element.keyHash[i].toString()).isDirectory -> {
+                currDir = File(currDir, element.keyHash[i].toString())
+            }
+            // проверяем, что не пришли в пустую папку
+            currDir.walk().maxDepth(1).count() == 1 -> {
+                break
+            }
+            else -> {
+                // спускаем все файлы директории на уровень ниже
+                currDir.walk().maxDepth(1).drop(1).forEach {
+                    if (it.isFile) push(currDir, it, i)
+                }
+                // переходим по биту
+                currDir = File(currDir, element.keyHash[i].toString())
+                if (!currDir.isDirectory) currDir.mkdir()
+            }
+        }
+    }
+    createFileForElement(currDir, element)
+    return true
 }
 
 /*
@@ -57,7 +104,7 @@ fun getNode(element: Element): File? {
 
     // обходим файлы в поиске нашего ключа
     currDir.walk().maxDepth(1).drop(1).forEach {
-        if (getKeyFromFile(it) == element.key) {
+        if (it.isFile && getKeyFromFile(it) == element.key) {
             return it
         }
     }
@@ -73,8 +120,8 @@ fun createFileForElement(parent: File, element: Element): File {
      * Находит МЕХ имён файлов в директории parent
      */
     fun mex(): Int {
-        var i = 0
-        while (File(parent, i.toString()).exists()) ++i
+        var i = 2
+        while (File(parent, i.toString()).isFile) ++i
         return i
     }
 
@@ -99,11 +146,18 @@ fun getKeyFromFile(file: File) = file.readLines()[0]
  */
 fun getValueFromFile(file: File) = file.readLines()[1]
 
+/*
+ * По файлу получает элемент, который в нем хранится
+ */
+fun getElementFromFile(file: File) = Element(getKeyFromFile(file), getValueFromFile(file))
+
 fun main(args: Array<String>) {
     val (queryType, element) = processInput(args)
 
     when (queryType) {
-        QueryType.ADD -> add(element)
+        QueryType.ADD -> {
+            if (!add(element)) println("This key already exists")
+        }
         QueryType.REMOVE -> {
             if (!remove(element)) println("No such key")
         }

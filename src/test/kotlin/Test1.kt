@@ -72,4 +72,23 @@ internal class Test1 {
         assertEquals(remove(elem1), true)
         assertEquals(getNode(elem1), null)
     }
+
+    @Test
+    fun testAdd1() {
+        val elem = Element("some_key", "some_value")
+
+        assertEquals(add(elem), true)
+        assertEquals(getNode(elem)?.readLines() ?: "", listOf(elem.key, elem.value))
+    }
+
+    @Test
+    fun testAdd2() {
+        val elem1 = Element("one_key", "one_value")
+        val elem2 = Element("other_key", "other_value")
+
+        assertEquals(add(elem1), true)
+        assertEquals(add(elem2), true)
+        assertEquals(getNode(elem1)?.readLines() ?: "", listOf(elem1.key, elem1.value))
+        assertEquals(getNode(elem2)?.readLines() ?: "", listOf(elem2.key, elem2.value))
+    }
 }
