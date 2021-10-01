@@ -20,8 +20,20 @@ fun add(element: Element) {
     TODO()
 }
 
-fun remove(element: Element) {
-    TODO()
+/*
+ * Получает element.
+ * Если есть файл с ключом element.key, то удаляет его и все более не нужные директории и возвращает true.
+ * Иначе возвращает false.
+ */
+fun remove(element: Element): Boolean {
+    var file = getNode(element) ?: return false
+    while (file.name != "db") {
+        val parent = file.parentFile
+        file.delete()
+        file = parent
+        if (parent.walk().count() > 1) break
+    }
+    return true
 }
 
 /*
@@ -63,7 +75,7 @@ fun getNode(element: Element): File? {
 fun createFileForElement(parent: File, element: Element): File {
 
     /*
-     * Находит МЕХ имён файлов в папке parent
+     * Находит МЕХ имён файлов в директории parent
      */
     fun mex(): Int {
         var i = 0
@@ -97,7 +109,9 @@ fun main(args: Array<String>) {
 
     when (queryType) {
         QueryType.ADD -> add(element)
-        QueryType.REMOVE -> remove(element)
+        QueryType.REMOVE -> {
+            if (!remove(element)) println("No such key")
+        }
         QueryType.GET -> {
             val node = getNode(element)
             println(if (node == null) "No such key" else getValueFromFile(node))
