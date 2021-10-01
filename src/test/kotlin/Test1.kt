@@ -16,7 +16,7 @@ internal class Test1 {
     @Test
     fun testGetNode1() {
         val elem = Element("some_key", "some_value")
-        val parent = File("db/${elem.keyHash}")
+        val parent = File("db")
         parent.mkdirs()
         val file = createFileForElement(parent, elem)
 
@@ -26,12 +26,12 @@ internal class Test1 {
     @Test
     fun testGetNode2() {
         val elem1 = Element("one_key", "one_value")
-        val parent1 = File("db/${elem1.keyHash[0]}/${elem1.keyHash.drop(1)}")
+        val parent1 = File("db/${elem1.keyHash[0]}")
         parent1.mkdirs()
         val file1 = createFileForElement(parent1, elem1)
 
         val elem2 = Element("other_key", "other_value")
-        val parent2 = File("db/${elem2.keyHash[0]}/${elem2.keyHash.drop(1)}")
+        val parent2 = File("db/${elem2.keyHash[0]}")
         parent2.mkdirs()
         val file2 = createFileForElement(parent2, elem2)
 
@@ -43,7 +43,7 @@ internal class Test1 {
     @Test
     fun testRemove1() {
         val elem = Element("some_key", "some_value")
-        val parent = File("db/${elem.keyHash}")
+        val parent = File("db")
         parent.mkdirs()
         val file = createFileForElement(parent, elem)
 
@@ -55,12 +55,12 @@ internal class Test1 {
     @Test
     fun testRemove2() {
         val elem1 = Element("one_key", "one_value")
-        val parent1 = File("db/${elem1.keyHash[0]}/${elem1.keyHash.drop(1)}")
+        val parent1 = File("db/${elem1.keyHash[0]}")
         parent1.mkdirs()
         val file1 = createFileForElement(parent1, elem1)
 
         val elem2 = Element("other_key", "other_value")
-        val parent2 = File("db/${elem2.keyHash[0]}/${elem2.keyHash.drop(1)}")
+        val parent2 = File("db/${elem2.keyHash[0]}")
         parent2.mkdirs()
         val file2 = createFileForElement(parent2, elem2)
 

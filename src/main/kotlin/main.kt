@@ -31,7 +31,7 @@ fun remove(element: Element): Boolean {
         val parent = file.parentFile
         file.delete()
         file = parent
-        if (parent.walk().count() > 1) break
+        if (parent.walk().maxDepth(1).count() > 1) break
     }
     return true
 }
@@ -51,18 +51,13 @@ fun getNode(element: Element): File? {
             File(currDir, element.keyHash[i].toString()).isDirectory -> {
                 currDir = File(currDir, element.keyHash[i].toString())
             }
-            // пытаемся перейти по суффиксу
-            File(currDir, element.keyHash.drop(i)).isDirectory -> {
-                currDir = File(currDir, element.keyHash.drop(i))
-                break
-            }
-            else -> return null
+            else -> break
         }
     }
 
     // обходим файлы в поиске нашего ключа
-    currDir.walk().forEach {
-        if (it.isFile && getKeyFromFile(it) == element.key) {
+    currDir.walk().maxDepth(1).drop(1).forEach {
+        if (getKeyFromFile(it) == element.key) {
             return it
         }
     }
