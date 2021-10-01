@@ -91,4 +91,11 @@ internal class Test1 {
         assertEquals(getNode(elem1)?.readLines() ?: "", listOf(elem1.key, elem1.value))
         assertEquals(getNode(elem2)?.readLines() ?: "", listOf(elem2.key, elem2.value))
     }
+
+    @Test
+    fun testProcessInput() {
+        assertEquals(processInput(arrayOf("add", "32", "23")), InputData(QueryType.ADD, Element("32", "23")))
+        assertEquals(processInput(arrayOf("remove", "hello")), InputData(QueryType.REMOVE, Element("hello", null)))
+        assertEquals(processInput(arrayOf("get", "end")), InputData(QueryType.GET, Element("end", null)))
+    }
 }

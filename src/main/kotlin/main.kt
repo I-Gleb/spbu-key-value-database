@@ -1,6 +1,7 @@
 import java.io.File
 import java.lang.Integer.toBinaryString
 import kotlin.math.ceil
+import kotlin.system.exitProcess
 
 const val HASHLEN = 31
 const val STARTDIR = "db"
@@ -14,7 +15,37 @@ data class Element(val key: String, val value: String?) {
 data class InputData(val queryType: QueryType, val element: Element)
 
 fun processInput(args: Array<String>): InputData {
-    TODO()
+    if (args.isEmpty()) {
+        println("No arguments provided")
+        exitProcess(1)
+    }
+    return when (args[0]) {
+        "add" -> {
+            if (args.size != 3) {
+                println("Incorrect input")
+                exitProcess(1)
+            }
+            InputData(QueryType.ADD, Element(args[1], args[2]))
+        }
+        "remove" -> {
+            if (args.size != 2) {
+                println("Incorrect input")
+                exitProcess(1)
+            }
+            InputData(QueryType.REMOVE, Element(args[1], null))
+        }
+        "get" -> {
+            if (args.size != 2) {
+                println("Incorrect input")
+                exitProcess(1)
+            }
+            InputData(QueryType.GET, Element(args[1], null))
+        }
+        else -> {
+            println("Incorrect input")
+            exitProcess(1)
+        }
+    }
 }
 
 /*
