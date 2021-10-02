@@ -1,5 +1,6 @@
 import java.io.File
 import java.lang.Integer.toBinaryString
+import java.nio.file.Files
 import kotlin.math.ceil
 import kotlin.system.exitProcess
 
@@ -73,27 +74,18 @@ fun add(element: Element): Boolean {
     // начинаем в корне структуры
     var currDir = File(STARTDIR)
 
+    // спускаемся в директорию, в которую надо поместить файл для element
     for (i in 0 until HASHLEN) {
-        when {
-            // пытаемся перейти по биту
-            File(currDir, element.keyHash[i].toString()).isDirectory -> {
-                currDir = File(currDir, element.keyHash[i].toString())
-            }
-            // проверяем, что не пришли в пустую папку
-            currDir.walk().maxDepth(1).count() == 1 -> {
-                break
-            }
-            else -> {
-                // спускаем все файлы директории на уровень ниже
-                currDir.walk().maxDepth(1).drop(1).forEach {
-                    if (it.isFile) push(currDir, it, i)
-                }
-                // переходим по биту
-                currDir = File(currDir, element.keyHash[i].toString())
-                if (!currDir.isDirectory) currDir.mkdir()
-            }
-        }
+        if (getChildren(currDir).count() == 0) break
+
+        // спускаем все файлы из директории на уровень ниже
+        getChildren(currDir).filter{ it.isFile }.forEach{ push(currDir, it, i) }
+
+        // переходим по биту, а если такой директории не существует, то создаём
+        currDir = File(currDir, element.keyHash[i].toString())
+        if (!currDir.isDirectory) currDir.mkdir()
     }
+
     createFileForElement(currDir, element)
     return true
 }
@@ -109,7 +101,7 @@ fun remove(element: Element): Boolean {
         val parent = file.parentFile
         file.delete()
         file = parent
-        if (parent.walk().maxDepth(1).count() > 1) break
+        if (getChildren(file).count() > 0) break
     }
     return true
 }
@@ -123,23 +115,19 @@ fun getNode(element: Element): File? {
     // начинаем в корне структуры
     var currDir = File(STARTDIR)
 
-    for (i in 0 until HASHLEN) {
+    // спускаемся по структуре до директории, в которой должен лежать соответсвующий файл
+    for (bit in element.keyHash) {
         when {
             // пытаемся перейти по биту
-            File(currDir, element.keyHash[i].toString()).isDirectory -> {
-                currDir = File(currDir, element.keyHash[i].toString())
+            File(currDir, bit.toString()).isDirectory -> {
+                currDir = File(currDir, bit.toString())
             }
             else -> break
         }
     }
 
-    // обходим файлы в поиске нашего ключа
-    currDir.walk().maxDepth(1).drop(1).forEach {
-        if (it.isFile && getKeyFromFile(it) == element.key) {
-            return it
-        }
-    }
-    return null
+    // ищем в директории нужный файл
+    return getChildren(currDir).find { it.isFile && getKeyFromFile(it) == element.key }
 }
 
 /*
@@ -181,6 +169,11 @@ fun getValueFromFile(file: File) = file.readLines()[1]
  * По файлу получает элемент, который в нем хранится
  */
 fun getElementFromFile(file: File) = Element(getKeyFromFile(file), getValueFromFile(file))
+
+/*
+ * Возращает содержимое директории
+ */
+fun getChildren(dir: File) = dir.walk().maxDepth(1).drop(1)
 
 fun main(args: Array<String>) {
     val (queryType, element) = processInput(args)
