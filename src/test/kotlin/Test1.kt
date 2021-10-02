@@ -1,16 +1,26 @@
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.PrintStream
 import kotlin.test.*
 
 internal class Test1 {
+    private val standardOut = System.out
+    private val standardIn = System.`in`
+    private val stream = ByteArrayOutputStream()
 
     @BeforeTest
     fun setUp() {
         clearDatabase()
+
+        System.setOut(PrintStream(stream))
     }
 
     @AfterTest
     fun tearDown() {
         clearDatabase()
+
+        System.setOut(standardOut)
+        System.setIn(standardIn)
     }
 
     @Test
@@ -97,5 +107,28 @@ internal class Test1 {
         assertEquals(processInput(arrayOf("add", "32", "23")), InputData(QueryType.ADD, Element("32", "23")))
         assertEquals(processInput(arrayOf("remove", "hello")), InputData(QueryType.REMOVE, Element("hello", null)))
         assertEquals(processInput(arrayOf("get", "end")), InputData(QueryType.GET, Element("end", null)))
+    }
+
+    @Test
+    fun testMain() {
+        var expectedOut = ""
+
+        main(arrayOf("add", "key1", "1"))
+        main(arrayOf("add", "key1", "2")); expectedOut += "This key already exists"
+
+        main(arrayOf("get", "key1")); expectedOut += "\n1"
+
+        main(arrayOf("add", "key2", "2"))
+
+        main(arrayOf("get", "key1")); expectedOut += "\n1"
+        main(arrayOf("get", "key2")); expectedOut += "\n2"
+
+        main(arrayOf("remove", "key1"))
+        main(arrayOf("remove", "key1")); expectedOut += "\nNo such key"
+
+        main(arrayOf("get", "key1")); expectedOut += "\nNo such key"
+        main(arrayOf("get", "key2")); expectedOut += "\n2"
+
+        assertEquals(expectedOut, stream.toString().trim().lines().joinToString("\n"))
     }
 }
