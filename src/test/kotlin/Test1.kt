@@ -104,6 +104,14 @@ internal class Test1 {
     }
 
     @Test
+    fun testWorkWithFiles() {
+        val element = Element("someKey", "someValue")
+        val file = createFileForElement(File(STARTDIR), element)
+        assertEquals(getKeyFromFile(file), element.key)
+        assertEquals(getValueFromFile(file), element.value)
+    }
+
+    @Test
     fun testProcessInput() {
         assertEquals(processInput(listOf("add", "32", "23")), Query(QueryType.ADD, Element("32", "23")))
         assertEquals(processInput(listOf("remove", "hello")), Query(QueryType.REMOVE, Element("hello", null)))
