@@ -1,3 +1,4 @@
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintStream
@@ -104,13 +105,14 @@ internal class Test1 {
 
     @Test
     fun testProcessInput() {
-        assertEquals(processInput(arrayOf("add", "32", "23")), InputData(QueryType.ADD, Element("32", "23")))
-        assertEquals(processInput(arrayOf("remove", "hello")), InputData(QueryType.REMOVE, Element("hello", null)))
-        assertEquals(processInput(arrayOf("get", "end")), InputData(QueryType.GET, Element("end", null)))
+        assertEquals(processInput(listOf("add", "32", "23")), Query(QueryType.ADD, Element("32", "23")))
+        assertEquals(processInput(listOf("remove", "hello")), Query(QueryType.REMOVE, Element("hello", null)))
+        assertEquals(processInput(listOf("get", "end")), Query(QueryType.GET, Element("end", null)))
+        assertEquals(processInput(listOf("some", "incorrect", "query")), null)
     }
 
     @Test
-    fun testMain() {
+    fun testMain1() {
         var expectedOut = ""
 
         main(arrayOf("add", "key1", "1"))
@@ -118,17 +120,39 @@ internal class Test1 {
 
         main(arrayOf("get", "key1")); expectedOut += "\n1"
 
-        main(arrayOf("add", "key2", "2"))
-
-        main(arrayOf("get", "key1")); expectedOut += "\n1"
-        main(arrayOf("get", "key2")); expectedOut += "\n2"
-
         main(arrayOf("remove", "key1"))
         main(arrayOf("remove", "key1")); expectedOut += "\nNo such key"
 
         main(arrayOf("get", "key1")); expectedOut += "\nNo such key"
-        main(arrayOf("get", "key2")); expectedOut += "\n2"
 
         assertEquals(expectedOut, stream.toString().trim().lines().joinToString("\n"))
+    }
+
+    @Test
+    fun testMain2() {
+        System.setIn(ByteArrayInputStream("""
+            add key1 1
+            add key1 2
+            get key1
+            add key2 2
+            get key1
+            get key2
+            remove key1
+            remove key1
+            get key1
+            get key2
+        """.trimIndent().toByteArray()))
+
+        main(arrayOf())
+
+        assertEquals("""
+            This key already exists
+            1
+            1
+            2
+            No such key
+            No such key
+            2
+        """.trimIndent(), stream.toString().trim().lines().joinToString("\n"))
     }
 }

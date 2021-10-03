@@ -1,8 +1,5 @@
 import java.io.File
 import java.lang.Integer.toBinaryString
-import java.nio.file.Files
-import kotlin.math.ceil
-import kotlin.system.exitProcess
 
 const val HASHLEN = 31
 const val STARTDIR = "db"
@@ -13,39 +10,33 @@ data class Element(val key: String, val value: String?) {
     val keyHash = toBinaryString(key.hashCode()).padStart(HASHLEN, '0')
 }
 
-data class InputData(val queryType: QueryType, val element: Element)
+data class Query(val queryType: QueryType, val element: Element)
 
-fun processInput(args: Array<String>): InputData {
-    if (args.isEmpty()) {
-        println("No arguments provided")
-        exitProcess(1)
+/*
+ * Принимает строку с запросом
+ * Если запрос корректный, то возращает Query, иначе null
+ */
+fun processInput(args: List<String>): Query? {
+
+    /*
+     * Принимает строку с запросом
+     * Если запрос корректный, то возращает тип запроса, иначе null
+     */
+    fun getQueryType(args: List<String>): QueryType? {
+        if (args.isEmpty()) return null
+        return when (args[0]) {
+            "add" -> if (args.size == 3) QueryType.ADD else null
+            "remove" -> if (args.size == 2) QueryType.REMOVE else null
+            "get" -> if (args.size == 2) QueryType.GET else null
+            else -> null
+        }
     }
-    return when (args[0]) {
-        "add" -> {
-            if (args.size != 3) {
-                println("Incorrect input")
-                exitProcess(1)
-            }
-            InputData(QueryType.ADD, Element(args[1], args[2]))
-        }
-        "remove" -> {
-            if (args.size != 2) {
-                println("Incorrect input")
-                exitProcess(1)
-            }
-            InputData(QueryType.REMOVE, Element(args[1], null))
-        }
-        "get" -> {
-            if (args.size != 2) {
-                println("Incorrect input")
-                exitProcess(1)
-            }
-            InputData(QueryType.GET, Element(args[1], null))
-        }
-        else -> {
-            println("Incorrect input")
-            exitProcess(1)
-        }
+
+    return when (getQueryType(args)) {
+        QueryType.ADD -> Query(QueryType.ADD, Element(args[1], args[2]))
+        QueryType.REMOVE -> Query(QueryType.REMOVE, Element(args[1], null))
+        QueryType.GET -> Query(QueryType.GET, Element(args[1], null))
+        else -> null
     }
 }
 
@@ -175,19 +166,27 @@ fun getElementFromFile(file: File) = Element(getKeyFromFile(file), getValueFromF
  */
 fun getChildren(dir: File) = dir.walk().maxDepth(1).drop(1)
 
-fun main(args: Array<String>) {
-    val (queryType, element) = processInput(args)
+/*
+ * Выполняет один запрос
+ */
+fun processQuery(query: Query?) {
+    if (query == null) {
+        println("Incorrect query")
+        return
+    }
 
+    val (queryType, element) = query
     when (queryType) {
-        QueryType.ADD -> {
-            if (!add(element)) println("This key already exists")
-        }
-        QueryType.REMOVE -> {
-            if (!remove(element)) println("No such key")
-        }
+        QueryType.ADD -> if (!add(element)) println("This key already exists")
+        QueryType.REMOVE -> if (!remove(element)) println("No such key")
         QueryType.GET -> {
             val node = getNode(element)
             println(if (node == null) "No such key" else getValueFromFile(node))
         }
     }
+}
+
+fun main(args: Array<String>) {
+    if (args.isNotEmpty()) processQuery(processInput(args.toList()))
+    else generateSequence { readLine() }.forEach { processQuery(processInput(it.split(" "))) }
 }
