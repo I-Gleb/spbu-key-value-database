@@ -1,8 +1,11 @@
+import org.junit.jupiter.api.assertTimeoutPreemptively
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintStream
+import java.time.Duration
 import kotlin.test.*
+import kotlin.text.StringBuilder
 
 internal class Test1 {
     private val standardOut = System.out
@@ -162,5 +165,49 @@ internal class Test1 {
             No such key
             2
         """.trimIndent(), stream.toString().trim().lines().joinToString("\n"))
+    }
+
+    @Test
+    fun testEfficiency() {
+
+        val currentMap = mutableMapOf<String, String>()
+        val nQueries = 3000
+
+        fun newElement(): Element {
+            var newKey = ""
+            while (currentMap.containsKey(newKey)) {
+                newKey += ('a'..'z').random()
+            }
+            val newVal = (1..10000).random().toString()
+            return Element(newKey, newVal)
+        }
+
+        val queries = List(nQueries) {
+            if (currentMap.isEmpty()) {
+                val newElement = newElement()
+                currentMap[newElement.key] = newElement.value.toString()
+                Query(QueryType.ADD, newElement)
+            }
+            else when (QueryType.values().random()) {
+                QueryType.ADD -> {
+                    val newElement = newElement()
+                    currentMap[newElement.key] = newElement.value.toString()
+                    Query(QueryType.ADD, newElement)
+                }
+                QueryType.REMOVE -> {
+                    val key = currentMap.keys.random()
+                    currentMap.remove(key)
+                    Query(QueryType.REMOVE, Element(key, null))
+                }
+                QueryType.GET -> {
+                    val key = currentMap.keys.random()
+                    Query(QueryType.GET, Element(key, null))
+                }
+            }
+        }
+
+        assertTimeoutPreemptively(Duration.ofSeconds(20)) {
+            queries.forEach { processQuery(it) }
+        }
     }
 }
