@@ -1,3 +1,4 @@
+import mu.KotlinLogging
 import java.io.File
 import java.lang.Integer.toBinaryString
 
@@ -6,7 +7,7 @@ const val STARTDIR = "db"
 
 enum class QueryType { ADD, REMOVE, GET }
 
-data class Element(val key: String, val value: String?) {
+data class Element(val key: String, val value: String? = null) {
     // создаёт бинарный хэш ключа
     val keyHash = toBinaryString(key.hashCode()).padStart(HASHLEN, '0')
 }
@@ -15,38 +16,37 @@ data class Query(val queryType: QueryType, val element: Element)
 
 /*
  * Принимает строку с запросом
- * Если запрос корректный, то возращает Query, иначе null
+ * Если запрос корректный, то возращает Query, иначе кидает исключение
  */
-fun processInput(args: List<String>): Query? {
+fun processInput(args: List<String>): Query {
 
     /*
      * Принимает строку с запросом
-     * Если запрос корректный, то возращает тип запроса, иначе null
+     * Если запрос корректный, то возращает тип запроса, иначе кидает исключение
      */
-    fun getQueryType(args: List<String>): QueryType? {
-        if (args.isEmpty()) return null
+    fun getQueryType(args: List<String>): QueryType {
+        if (args.isEmpty()) throw EmptyLine()
         return when (args[0]) {
-            "add" -> if (args.size == 3) QueryType.ADD else null
-            "remove" -> if (args.size == 2) QueryType.REMOVE else null
-            "get" -> if (args.size == 2) QueryType.GET else null
-            else -> null
+            "add" -> if (args.size == 3) QueryType.ADD else throw IncorrectNumberOfArguments(args.size - 1, 2, "add")
+            "remove" -> if (args.size == 2) QueryType.REMOVE else throw IncorrectNumberOfArguments(args.size - 1, 1, "remove")
+            "get" -> if (args.size == 2) QueryType.GET else throw IncorrectNumberOfArguments(args.size - 1, 1, "get")
+            else -> throw UnsupportedQuery(args[0])
         }
     }
 
     return when (getQueryType(args)) {
         QueryType.ADD -> Query(QueryType.ADD, Element(args[1], args[2]))
-        QueryType.REMOVE -> Query(QueryType.REMOVE, Element(args[1], null))
-        QueryType.GET -> Query(QueryType.GET, Element(args[1], null))
-        else -> null
+        QueryType.REMOVE -> Query(QueryType.REMOVE, Element(args[1]))
+        QueryType.GET -> Query(QueryType.GET, Element(args[1]))
     }
 }
 
 /*
  * Получает element.
- * Если файла с таким ключом не существует, то добавляет его и возвращает true.
- * Иначе возвращает false.
+ * Если файла с таким ключом не существует, то добавляет его.
+ * Иначе кидает исключение.
  */
-fun add(element: Element): Boolean {
+fun add(element: Element) {
 
     /*
      * Создаёт для файла более глубокую директорию, соответсвующую его хэшу, и перемещает его туда
@@ -61,7 +61,7 @@ fun add(element: Element): Boolean {
     }
 
 
-    if (getNode(element) != null) return false
+    if (getNode(element) != null) throw KeyAlreadyExists(element.key)
 
     // начинаем в корне структуры
     var currDir = File(STARTDIR)
@@ -79,23 +79,21 @@ fun add(element: Element): Boolean {
     }
 
     createFileForElement(currDir, element)
-    return true
 }
 
 /*
  * Получает element.
- * Если есть файл с ключом element.key, то удаляет его и все более не нужные директории и возвращает true.
- * Иначе возвращает false.
+ * Если есть файл с ключом element.key, то удаляет его и все более не нужные директории.
+ * Иначе кидает исключение.
  */
-fun remove(element: Element): Boolean {
-    var file = getNode(element) ?: return false
+fun remove(element: Element) {
+    var file = getNode(element) ?: throw NoSuchKey(element.key)
     while (file.name != "db") {
         val parent = file.parentFile
         file.delete()
         file = parent
         if (getChildren(file).count() > 0) break
     }
-    return true
 }
 
 /*
@@ -173,26 +171,36 @@ fun getChildren(dir: File) = dir.walk().maxDepth(1).drop(1)
 /*
  * Выполняет один запрос
  */
-fun processQuery(query: Query?) {
-    if (query == null) {
-        println("Incorrect query")
-        return
-    }
-
+fun processQuery(query: Query) {
     val (queryType, element) = query
     when (queryType) {
-        QueryType.ADD -> if (!add(element)) println("This key already exists")
-        QueryType.REMOVE -> if (!remove(element)) println("No such key")
+        QueryType.ADD -> add(element)
+        QueryType.REMOVE -> remove(element)
         QueryType.GET -> {
-            val node = getNode(element)
-            println(if (node == null) "No such key" else getValueFromFile(node))
+            val node = getNode(element) ?: throw NoSuchKey(element.key)
+            println(getValueFromFile(node))
         }
     }
 }
 
+val logger = KotlinLogging.logger {  }
+
 fun main(args: Array<String>) {
-    if (args.isNotEmpty()) processQuery(processInput(args.toList()))
+    logger.info {"program started"}
+
+    if (args.isNotEmpty())
+        try { processQuery(processInput(args.toList())) }
+        catch (e: Exception) {
+            logger.error { e.message }
+            println(e.message)
+        }
     else generateSequence { readLine() }.forEach {
-        processQuery(processInput(it.split(" ")))
+        try { processQuery(processInput(it.split(" "))) }
+        catch (e: Exception) {
+            logger.error { e.message }
+            println(e.message)
+        }
     }
+
+    logger.info {"program completed"}
 }

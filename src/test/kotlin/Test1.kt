@@ -1,3 +1,4 @@
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertTimeoutPreemptively
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -5,7 +6,6 @@ import java.io.File
 import java.io.PrintStream
 import java.time.Duration
 import kotlin.test.*
-import kotlin.text.StringBuilder
 
 internal class Test1 {
     private val standardOut = System.out
@@ -62,8 +62,9 @@ internal class Test1 {
         val file = createFileForElement(parent, elem)
 
         assertEquals(getNode(elem), file)
-        assertEquals(remove(elem), true)
+        assertDoesNotThrow { (remove(elem)) }
         assertEquals(getNode(elem), null)
+        assertFailsWith<NoSuchKey> { remove(elem) }
     }
 
     @Test
@@ -80,10 +81,10 @@ internal class Test1 {
 
         assertEquals(getNode(elem1), file1)
         assertEquals(getNode(elem2), file2)
-        assertEquals(remove(elem2), true)
+        assertDoesNotThrow { remove(elem2) }
         assertEquals(getNode(elem2), null)
-        assertEquals(remove(elem2), false)
-        assertEquals(remove(elem1), true)
+        assertFailsWith<NoSuchKey> { remove(elem2) }
+        assertDoesNotThrow { remove(elem1) }
         assertEquals(getNode(elem1), null)
     }
 
@@ -91,7 +92,8 @@ internal class Test1 {
     fun testAdd1() {
         val elem = Element("some_key", "some_value")
 
-        assertEquals(add(elem), true)
+        assertDoesNotThrow { add(elem) }
+        assertFailsWith<KeyAlreadyExists> { add(elem) }
         assertEquals(getNode(elem)?.readLines() ?: "", listOf(elem.key, elem.value))
     }
 
@@ -100,8 +102,9 @@ internal class Test1 {
         val elem1 = Element("one_key", "one_value")
         val elem2 = Element("other_key", "other_value")
 
-        assertEquals(add(elem1), true)
-        assertEquals(add(elem2), true)
+        assertDoesNotThrow { add(elem1) }
+        assertDoesNotThrow { add(elem2) }
+
         assertEquals(getNode(elem1)?.readLines() ?: "", listOf(elem1.key, elem1.value))
         assertEquals(getNode(elem2)?.readLines() ?: "", listOf(elem2.key, elem2.value))
     }
@@ -119,7 +122,8 @@ internal class Test1 {
         assertEquals(processInput(listOf("add", "32", "23")), Query(QueryType.ADD, Element("32", "23")))
         assertEquals(processInput(listOf("remove", "hello")), Query(QueryType.REMOVE, Element("hello", null)))
         assertEquals(processInput(listOf("get", "end")), Query(QueryType.GET, Element("end", null)))
-        assertEquals(processInput(listOf("some", "incorrect", "query")), null)
+        assertFailsWith<UnsupportedQuery> { processInput(listOf("some", "incorrect", "query")) }
+        assertFailsWith<IncorrectNumberOfArguments> { processInput(listOf("remove", "incorrect", "query")) }
     }
 
     @Test
@@ -127,14 +131,14 @@ internal class Test1 {
         var expectedOut = ""
 
         main(arrayOf("add", "key1", "1"))
-        main(arrayOf("add", "key1", "2")); expectedOut += "This key already exists"
+        main(arrayOf("add", "key1", "2")); expectedOut += "Key key1 already exists"
 
         main(arrayOf("get", "key1")); expectedOut += "\n1"
 
         main(arrayOf("remove", "key1"))
-        main(arrayOf("remove", "key1")); expectedOut += "\nNo such key"
+        main(arrayOf("remove", "key1")); expectedOut += "\nKey key1 doesn't exists"
 
-        main(arrayOf("get", "key1")); expectedOut += "\nNo such key"
+        main(arrayOf("get", "key1")); expectedOut += "\nKey key1 doesn't exists"
 
         assertEquals(expectedOut, stream.toString().trim().lines().joinToString("\n"))
     }
@@ -157,12 +161,12 @@ internal class Test1 {
         main(arrayOf())
 
         assertEquals("""
-            This key already exists
+            Key key1 already exists
             1
             1
             2
-            No such key
-            No such key
+            Key key1 doesn't exists
+            Key key1 doesn't exists
             2
         """.trimIndent(), stream.toString().trim().lines().joinToString("\n"))
     }
