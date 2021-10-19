@@ -1,12 +1,13 @@
 import java.io.File
 import java.lang.Integer.toBinaryString
 
-const val HASHLEN = 31
+const val HASHLEN = 32
 const val STARTDIR = "db"
 
 enum class QueryType { ADD, REMOVE, GET }
 
 data class Element(val key: String, val value: String?) {
+    // создаёт бинарный хэш ключа
     val keyHash = toBinaryString(key.hashCode()).padStart(HASHLEN, '0')
 }
 
@@ -48,7 +49,7 @@ fun processInput(args: List<String>): Query? {
 fun add(element: Element): Boolean {
 
     /*
-     * Создаёт для файла более глубокую директорию и перемещает его туда
+     * Создаёт для файла более глубокую директорию, соответсвующую его хэшу, и перемещает его туда
      */
     fun push(parent: File, file: File, i: Int) {
         val elem = getElementFromFile(file)
@@ -69,7 +70,7 @@ fun add(element: Element): Boolean {
     for (i in 0 until HASHLEN) {
         if (getChildren(currDir).count() == 0) break
 
-        // спускаем все файлы из директории на уровень ниже
+        // спускаем все файлы из текущей директории на уровень ниже
         getChildren(currDir).filter{ it.isFile }.forEach{ push(currDir, it, i) }
 
         // переходим по биту, а если такой директории не существует, то создаём
@@ -141,6 +142,9 @@ fun createFileForElement(parent: File, element: Element): File {
     return file
 }
 
+/*
+ * Удаляет все элементы базы данных
+ */
 fun clearDatabase() {
     File(STARTDIR).deleteRecursively()
     File(STARTDIR).mkdir()
@@ -188,5 +192,7 @@ fun processQuery(query: Query?) {
 
 fun main(args: Array<String>) {
     if (args.isNotEmpty()) processQuery(processInput(args.toList()))
-    else generateSequence { readLine() }.forEach { processQuery(processInput(it.split(" "))) }
+    else generateSequence { readLine() }.forEach {
+        processQuery(processInput(it.split(" ")))
+    }
 }
