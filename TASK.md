@@ -1,13 +1,11 @@
-# Постановка задачи
+# Task definition
 
-В этом проекте требуется реализовать утилиту — консольный интерфейс к базе данных, 
-поддерживающий операции по поиску, вставке и удалению текстовых значений по соответствующим им текстовым ключам. 
-База данных должна храниться в отдельном файле и сохраняться между запусками утилиты. 
-В качестве примера можно ориентироваться на утилиту [dbm](https://en.wikipedia.org/wiki/DBM_(computing)).
+In this project, it is required to implement a utility - a console interface to the database,
+supporting operations for searching, inserting and deleting text values according to their corresponding text keys.
+The database must be stored in a separate file and persisted between runs of the utility.
+As an example, you can refer to the [dbm utility](https://en.wikipedia.org/wiki/DBM_(computing)).
 
-Требуется самостоятельно разработать и описать пользовательский 
-интерфейс программы, форматы входных и выходных данных, организовать тестирование, убедиться, 
-что программа работает с достаточно большими файлами, предоставить наборы файлов для проверки 
-корректности реализации. Разработка должна вестись регулярно, история коммитов должна отражать 
-процесс разработки, сообщения коммитов рекомендуется писать на английском языке 
-(но сообщения на русском языке также допускаются).
+It is required to independently develop and describe a custom
+program interface, input and output data formats, organize testing, make sure
+that the program works with large enough files, provide sets of files for verification
+implementation correctness.
