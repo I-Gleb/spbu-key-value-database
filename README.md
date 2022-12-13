@@ -1,48 +1,48 @@
-# Курс основ программирования на МКН СПбГУ
-## Проект 2: key-value база данных
+# Key-value database
+## Project made for programming basics course at Department of Mathematics and Computer Science, St. Petersburg State University
 
-[Постановка задачи](./TASK.md)
+[Task definition](./TASK.md)
 
-### Документация
+### Documentation
 
-Данная утилита является консольным интерфейсом к базе данных, которая поддерживает операции по поиску, вставке и удалению текстовых значений по соответствующим им текстовым ключам.
+This utility is a console interface to a database that supports operations for searching, inserting and deleting text values using their corresponding text keys.
 
-#### Входные данные
+#### Input data
 
-Данная утилита имеет 2 режима работы с входными данными.
+This utility has 2 modes of working with input data.
 
-При запуске с параметрами, принимает одну команду, выполняет её или выводит сообщение о невозможности и завершается.
+When run with parameters, it accepts one command, executes it or prints an error message, and exits.
 
-При запуске без параметров, принимает сколько угодно команд по 1 в строке до конца ввода и отвечает на них по мере получения.
+When run without parameters, it accepts as many commands as it likes, 1 per line until the end of input, and responds to them as it is received.
 
-#### Интерфейс:
+#### Interface:
 
-Есть три вида команд:
-* *add key value* - добавляет в базу данных значение *value* по ключу *key*, если в базе ещё нет такого ключа, иначе ничего не делает и выводит сообщение пользователю
-* *remove key* - если в базе есть ключ *key*, то удаляет его, иначе ничего не делает и выводит сообщение пользователю
-* *get key* - если в базе есть ключ *key*, то выводит значение ему соответствующее, иначе ничего не делает и выводит сообщение пользователю
+There are three types of commands:
+* *add key value* - adds *value* by *key* to the database, if there is no such key in the database, otherwise it does nothing and displays an error message to the user
+* *remove key* - if there is a *key* in the database, then it removes it, otherwise it does nothing and displays an error message to the user
+* *get key* - if there is a *key* in the database, then it displays the value corresponding to it, otherwise it does nothing and displays n error message to the user
 
-#### Примеры использования:
+#### Examples of using:
 
-    $ db add key value
-    $ db get key
+     $ db add key value
+     $db get key
 
-или
+or
 
-    $ db
-    add key value
-    get key
+     $db
+     add key value
+     get key
 
-#### Принцип работы
+#### General idea
 
-База данных представляет из себя бинарное дерево, в листах которого хранятся файлы, соответсвующие существующим парам ключ-значение.
-Корневая директория задаётся константой *STARTDIR*.
-Для каждого ключа считается 32-битный бинарный хэш, который будет путём до листа, в котором будет хранится соответвующий файл.
+The database is a binary tree, the leaves of which store files corresponding to existing key-value pairs.
+The root directory is specified by the constant *STARTDIR*.
+For each key, a 32-bit binary hash is considered, which will be the path to the leaf in which the corresponding file will be stored.
 
-Например, если хэш ключа равен *00101001010010101001010110001101*, то файл будет хранится в диретории *STARTDIR/0/0/1/0/1/0/0/1/0/1/0/0/1/0/1/0/1/0/0/1/0/1/0/1/1/0/0/0/1/1/0/1*.
+For example, if the key hash is *00101001010010101001010110001101*, then the file will be stored in the *STARTDIR/0/0/1/0/1/0/0/1/0/1/0/0/1/0/1/0 directory /1/0/0/1/0/1/0/1/1/0/0/0/1/1/0/1*.
 
-Ввиду коллизий в папке может хранится более одного файла, поэтому при добавлении файла в директорию с помощью MEX выбирается ещё незанятое имя файла,
-а при поиске по ключу, когда мы оказались в нужной директории просматриваются все файлы в поиске запрашиваемого ключа.
+Due to the ollisions, more than one file can be stored in a folder, so when adding a file to a directory, unoccupied file name is selected using MEX.
+When searching for a specific key all files in directory correspoding to the hash are checked.
 
-Для оптимизации количества операций и используемой памяти при добавлении новых пар ключ-значение создаётся не полный путь из 32 уровней, а только его префикс, если с какого-то момента есть только один файл, у которого такой префикс хэша.
-Также при удалении пары-ключ значение удаляются все более неиспользуемые директории.
+To optimize the number of operations and the memory usage, when adding new key-value pairs, not the full path of 32 levels is created, but only its prefix, such that on other keys in our database have the same hash prefix.
+Also, when deleting a key-value pair, directories that are no longer used are deleted.
